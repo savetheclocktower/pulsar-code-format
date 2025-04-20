@@ -92,6 +92,8 @@ class CodeFormatManager {
   private watchedEditors: WeakSet<TextEditor> = new WeakSet();
   private watchedBuffers: WeakSet<TextBuffer> = new WeakSet();
 
+  private bufferModificationTimes: WeakMap<TextBuffer, number> = new WeakMap();
+
   constructor() {
     this.subscriptions = new CompositeDisposable(
       // A command to format the file or the selected code.
@@ -246,10 +248,20 @@ class CodeFormatManager {
           );
           if (!this.watchedBuffers.has(buffer)) {
             editorSubs.add(
+              // A simple versioning strategy: record buffer modification
+              // timestamps so we know if they change while we're waiting for a
+              // provider.
+              //
+              // The `onDidChange` callback fires very often, so we should not
+              // do any more work in this callback than we absolutely have to.
+              buffer.onDidChange(() => {
+                this.bufferModificationTimes.set(buffer, Date.now())
+              }),
+
               // Format on save. Formatters are applied before the buffer is
               // saved; because we return a promise here, committing to disk will
               // be deferred until the promise resolves.
-              editor.getBuffer().onWillSave(async () => {
+              buffer.onWillSave(async () => {
                 if (!getFormatOnSave(editor)) return;
                 let pipeline = await this.formatCodeOnSaveInTextEditor(editor);
                 try {
@@ -279,6 +291,23 @@ class CodeFormatManager {
     };
   }
 
+  // A wrapper around an arbitrary pipeline action. Will try to detect when a
+  // code formatting result is stale and fail silently instead of doing
+  // something destructive.
+  guardVersion(fn: (editor: TextEditor, range?: Range) => Promise<TextEdit[]>) {
+    return async (editor: TextEditor, range?: Range) => {
+      let buffer = editor.getBuffer();
+      let before = this.bufferModificationTimes.get(buffer) ?? -1;
+      let edits = await fn(editor, range);
+      let after = this.bufferModificationTimes.get(buffer) ?? -1;
+      if (before !== after) {
+        console.warn("Warning: Code format provider failed to act because of a version mismatch.");
+        return [];
+      }
+      return edits;
+    }
+  }
+
   formatCodeInTextEditor(editor: TextEditor, selectionRange: Range | null = null) {
     selectionRange ??= editor.getSelectedBufferRange();
 
@@ -295,17 +324,23 @@ class CodeFormatManager {
 
     if (selectionRange.isEmpty() && fileProviders.length > 0) {
       for (let provider of fileProviders) {
-        pipeline.push(async () => await provider.formatEntireFile(editor));
+        pipeline.push(
+          this.guardVersion(
+            async (editor: TextEditor) => await provider.formatEntireFile(editor)
+          )
+        );
       }
       return pipeline;
     } else {
       // Apply code formatters in order.
       for (let provider of rangeProviders) {
         pipeline.push(
-          async (editor: TextEditor, range?: Range) => {
-            range ??= editor.getBuffer().getRange();
-            return await provider.formatCode(editor, range);
-          }
+          this.guardVersion(
+            async (editor: TextEditor, range?: Range) => {
+              range ??= editor.getBuffer().getRange();
+              return await provider.formatCode(editor, range);
+            }
+          )
         );
       }
       return pipeline;
@@ -372,9 +407,11 @@ class CodeFormatManager {
     const pipeline: CodeFormatStep[] = [];
     for (let provider of saveProviders) {
       pipeline.push(
-        async () => {
-          return await provider.formatOnSave(editor);
-        }
+        this.guardVersion(
+          async (editor: TextEditor) => {
+            return await provider.formatOnSave(editor);
+          }
+        )
       );
     }
     if (pipeline.length === 0) {
@@ -388,7 +425,6 @@ class CodeFormatManager {
     if (!('formatCode' in provider)) {
       console.warn('Invalid provider:', provider);
       return;
-      // throw new Error('Invalid provider!');
     }
     let result = this.providers.range.addProvider(provider);
     console.log('Provider count for range:', this.providers.range.providers.length);
@@ -399,7 +435,6 @@ class CodeFormatManager {
     if (!('formatEntireFile' in provider)) {
       console.warn('Invalid provider:', provider);
       return;
-      // throw new Error('Invalid provider!');
     }
     let result = this.providers.file.addProvider(provider);
     console.log('Provider count for file:', this.providers.file.providers.length);
@@ -410,7 +445,6 @@ class CodeFormatManager {
     if (!('formatAtPosition' in provider)) {
       console.warn('Invalid provider:', provider);
       return;
-      // throw new Error('Invalid provider!');
     }
     let result = this.providers.onType.addProvider(provider);
     console.log('Provider count for onType:', this.providers.onType.providers.length);
@@ -421,7 +455,6 @@ class CodeFormatManager {
     if (!('formatOnSave' in provider)) {
       console.warn('Invalid provider:', provider);
       return;
-      // throw new Error('Invalid provider!');
     }
     let result = this.providers.onSave.addProvider(provider);
     console.log('Provider count for onSave:', this.providers.onSave.providers.length);
