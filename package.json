@@ -1,0 +1,81 @@
+{
+  "name": "pulsar-code-format",
+  "main": "./dist/main",
+  "version": "0.0.1",
+  "description": "A short description of your package",
+  "keywords": [],
+  "repository": "https://github.com/savetheclocktower/pulsar-code-format",
+  "license": "MIT",
+  "engines": {
+    "atom": ">=1.0.0 <2.0.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "clean": "shx rm -rf dist",
+    "build-commit": "npm run clean && build-commit -o dist",
+    "prepublishOnly": "npm run build-commit"
+  },
+  "configSchema": {
+    "codeFormat": {
+      "type": "object",
+      "title": "Code Formatting",
+      "collapsed": false,
+      "properties": {
+        "onSave": {
+          "title": "Format On Save",
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to attempt to format code on save."
+        },
+        "onType": {
+          "title": "Format On Type",
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to attempt to format code as you type."
+        },
+        "useAllProviders": {
+          "title": "Use All Providers",
+          "type": "boolean",
+          "default": false,
+          "description": "When checked, each code formatting provider is applied in series in order of priority. When unchecked, only the first provider is applied."
+        }
+      }
+    }
+  },
+  "consumedServices": {
+    "code-format.range": {
+      "versions": {
+        "0.1.0": "consumeRangeProvider",
+        "0.2.0": "consumeRangeProvider"
+      }
+    },
+    "code-format.file": {
+      "versions": {
+        "0.1.0": "consumeFileProvider",
+        "0.2.0": "consumeFileProvider"
+      }
+    },
+    "code-format.onType": {
+      "versions": {
+        "0.1.0": "consumeOnTypeProvider",
+        "0.2.0": "consumeOnTypeProvider"
+      }
+    },
+    "code-format.onSave": {
+      "versions": {
+        "0.1.0": "consumeOnSaveProvider",
+        "0.2.0": "consumeOnSaveProvider"
+      }
+    }
+  },
+  "devDependencies": {
+    "@types/atom": "^1.40.18",
+    "atom-ide-base": "^3.3.0",
+    "shx": "^0.3.4",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "dedent": "^1.5.3"
+  }
+}

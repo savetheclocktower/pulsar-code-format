@@ -1,0 +1,26 @@
+{
+  "context-menu": {
+    "atom-text-editor": [
+      {
+        "label": "Toggle pulsar-code-format",
+        "command": "pulsar-code-format:toggle"
+      }
+    ]
+  },
+  "menu": [
+    {
+      "label": "Packages",
+      "submenu": [
+        {
+          "label": "pulsar-code-format",
+          "submenu": [
+            {
+              "label": "Toggle",
+              "command": "pulsar-code-format:toggle"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
