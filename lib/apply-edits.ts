@@ -1,5 +1,5 @@
-import {TextBuffer, TextEditor} from 'atom';
-import {TextEdit} from "atom-ide-base";
+import { TextBuffer, TextEditor } from 'atom';
+import { TextEdit } from "atom-ide-base";
 
 const MARKER_LAYERS_FOR_EDITORS = new WeakMap();
 const MARKER_LAYERS_FOR_BUFFERS = new WeakMap();
@@ -7,7 +7,7 @@ const MARKER_LAYERS_FOR_BUFFERS = new WeakMap();
 function findOrCreateMarkerLayerForEditor(editor: TextEditor) {
   let layer = MARKER_LAYERS_FOR_EDITORS.get(editor);
   if (!layer) {
-    layer = editor.addMarkerLayer({maintainHistory: true});
+    layer = editor.addMarkerLayer({ maintainHistory: true });
     MARKER_LAYERS_FOR_EDITORS.set(editor, layer);
   }
   return layer;
@@ -16,7 +16,7 @@ function findOrCreateMarkerLayerForEditor(editor: TextEditor) {
 function findOrCreateMarkerLayerForBuffer(buffer: TextBuffer) {
   let layer = MARKER_LAYERS_FOR_BUFFERS.get(buffer);
   if (!layer) {
-    layer = buffer.addMarkerLayer({maintainHistory: true});
+    layer = buffer.addMarkerLayer({ maintainHistory: true });
     MARKER_LAYERS_FOR_BUFFERS.set(buffer, layer);
   }
   return layer;
