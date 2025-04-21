@@ -17,30 +17,23 @@
     "prepublishOnly": "npm run build-commit"
   },
   "configSchema": {
-    "codeFormat": {
-      "type": "object",
-      "title": "Code Formatting",
-      "collapsed": false,
-      "properties": {
-        "onSave": {
-          "title": "Format On Save",
-          "type": "boolean",
-          "default": false,
-          "description": "Whether to attempt to format code on save."
-        },
-        "onType": {
-          "title": "Format On Type",
-          "type": "boolean",
-          "default": false,
-          "description": "Whether to attempt to format code as you type."
-        },
-        "useAllProviders": {
-          "title": "Use All Providers",
-          "type": "boolean",
-          "default": false,
-          "description": "When checked, each code formatting provider is applied in series in order of priority. When unchecked, only the first provider is applied."
-        }
-      }
+    "formatOnSave": {
+      "title": "Format On Save",
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to attempt to format code on save."
+    },
+    "formatOnType": {
+      "title": "Format On Type",
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to attempt to format code as you type."
+    },
+    "useAllProviders": {
+      "title": "Use All Providers",
+      "type": "boolean",
+      "default": false,
+      "description": "When checked, each code formatting provider is applied in series in order of priority. When unchecked, only the first provider is applied."
     }
   },
   "consumedServices": {

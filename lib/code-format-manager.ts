@@ -47,11 +47,11 @@ function getScopedSettingsForKey<T = unknown>(key: string, editor: TextEditor): 
 }
 
 function getFormatOnSave(editor: TextEditor) {
-  return getScopedSettingsForKey<boolean>(`pulsar-code-format.codeFormat.onSave`, editor);
+  return getScopedSettingsForKey<boolean>(`pulsar-code-format.formatOnSave`, editor);
 }
 
 function getFormatOnType(editor: TextEditor) {
-  return getScopedSettingsForKey<boolean>(`pulsar-code-format.codeFormat.onType`, editor);
+  return getScopedSettingsForKey<boolean>(`pulsar-code-format.formatOnType`, editor);
 }
 
 type ProviderRegistryCollection = {
@@ -104,6 +104,9 @@ class CodeFormatManager {
           const editorElement = event.currentTarget;
           const editor = editorElement.getModel();
           let selectionRange = editor.getSelectedBufferRange();
+          if (selectionRange.isEmpty()) {
+            selectionRange = editor.getBuffer().getRange();
+          }
           let pipeline = this.formatCodeInTextEditor(editor, selectionRange);
           try {
             await applyCodeFormatPipelineToEditor(pipeline, editor, selectionRange);
@@ -126,13 +129,21 @@ class CodeFormatManager {
           let editorElement = event.currentTarget;
           let editor = editorElement.getModel();
 
-          let packageResults: { range: Package[], file: Package[], onSave: Package[], onType: Package[]; } = {
+          let packageResults: {
+            range: Package[],
+            file: Package[],
+            onSave: Package[],
+            onType: Package[];
+          } = {
             range: [],
             file: [],
             onSave: [],
             onType: []
           };
+
           let allPackages = atom.packages.getActivePackages();
+          // Search all packages to see which ones advertise themselves as
+          // providing a `code-format.*` service.
           for (let pack of allPackages) {
             // @ts-ignore undocumented
             if (!pack?.metadata?.providedServices) continue;
@@ -184,6 +195,10 @@ class CodeFormatManager {
             `);
           }
 
+          // Also look up the actual providers that have been registered with
+          // us. We can't match these up to the packages they came from (yet),
+          // but this will help indicate how many of these providers are
+          // actually active in the current editor.
           let providers = {
             range: this.providers.range.getAllProvidersForEditor(editor),
             file: this.providers.file.getAllProvidersForEditor(editor),
@@ -193,8 +208,8 @@ class CodeFormatManager {
 
           let getPackagesForProviders = (providers: unknown[]) => {
             // @ts-ignore
-            return providers.map(p => atom.packages.packageForService(p))
-          }
+            return providers.map(p => atom.packages.packageForService(p));
+          };
 
           // @ts-ignore experimental API
           if (typeof atom.packages?.packageForService === 'function') {
@@ -204,7 +219,6 @@ class CodeFormatManager {
               onSave: getPackagesForProviders(providers.onSave),
               onType: getPackagesForProviders(providers.onType)
             };
-            console.log('PACKAGES!!!', packages);
           }
 
           sections.unshift(dedent`
@@ -244,7 +258,7 @@ class CodeFormatManager {
               } catch (err) {
                 console.warn(`Failed to format code on type:`, err);
               }
-            }),
+            })
           );
           if (!this.watchedBuffers.has(buffer)) {
             editorSubs.add(
@@ -255,7 +269,7 @@ class CodeFormatManager {
               // The `onDidChange` callback fires very often, so we should not
               // do any more work in this callback than we absolutely have to.
               buffer.onDidChange(() => {
-                this.bufferModificationTimes.set(buffer, Date.now())
+                this.bufferModificationTimes.set(buffer, Date.now());
               }),
 
               // Format on save. Formatters are applied before the buffer is
@@ -305,7 +319,7 @@ class CodeFormatManager {
         return [];
       }
       return edits;
-    }
+    };
   }
 
   formatCodeInTextEditor(editor: TextEditor, selectionRange: Range | null = null) {

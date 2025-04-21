@@ -8,7 +8,9 @@ declare class CodeFormatManager {
     private providers;
     private watchedEditors;
     private watchedBuffers;
+    private bufferModificationTimes;
     constructor();
+    guardVersion(fn: (editor: TextEditor, range?: Range) => Promise<TextEdit[]>): (editor: TextEditor, range?: Range) => Promise<TextEdit[]>;
     formatCodeInTextEditor(editor: TextEditor, selectionRange?: Range | null): CodeFormatStep[];
     formatCodeOnTypeInTextEditor(editor: TextEditor, { changes }: BufferStoppedChangingEvent): Promise<TextEdit[]>;
     formatCodeOnSaveInTextEditor(editor: TextEditor): Promise<CodeFormatStep[]>;

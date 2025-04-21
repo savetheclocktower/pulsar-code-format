@@ -20,8 +20,14 @@ export default class ProviderRegistry<TProvider extends BaseCodeFormatProvider =
 
   getAllProvidersForEditor(editor: TextEditor) {
     return this.providers.filter(provider => {
-      let result = isEditorSupported<TProvider>(editor, provider);
-      console.log('Does provider support editor?', result, editor.getGrammar()?.scopeName, provider.grammarScopes, provider);
+      let result = isEditorSupported(editor, provider);
+      // console.log(
+      //   'Does provider support editor?',
+      //   result,
+      //   editor.getGrammar()?.scopeName,
+      //   provider.grammarScopes,
+      //   provider
+      // );
       return result;
     });
   }
