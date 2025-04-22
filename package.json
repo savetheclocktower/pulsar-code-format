@@ -2,7 +2,7 @@
   "name": "pulsar-code-format",
   "main": "./dist/main",
   "version": "0.0.1",
-  "description": "A short description of your package",
+  "description": "A pluggable code formatting package",
   "keywords": [],
   "repository": "https://github.com/savetheclocktower/pulsar-code-format",
   "license": "MIT",
