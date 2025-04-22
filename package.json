@@ -1,7 +1,7 @@
 {
   "name": "pulsar-code-format",
   "main": "./dist/lib/main",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A pluggable code formatting package",
   "keywords": [],
   "repository": "https://github.com/savetheclocktower/pulsar-code-format",
