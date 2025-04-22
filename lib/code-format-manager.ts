@@ -6,6 +6,7 @@ import { TextEdit } from 'atom-ide-base';
 import ProviderRegistry from './provider-registry';
 import { FileCodeFormatProvider, OnSaveCodeFormatProvider, OnTypeCodeFormatProvider, RangeCodeFormatProvider } from './providers';
 import dedent from 'dedent';
+import * as console from './console';
 
 type ConfigSchemaType = 'boolean' | 'object' | 'array' | 'number' | 'string';
 type ConfigSchema<T = unknown> = { type: ConfigSchemaType, default: T; };
@@ -20,6 +21,10 @@ function isErrorWithDetail(x: unknown): x is ErrorWithDetail {
 
 // Save events are critical, so don't allow providers to block them.
 export const SAVE_TIMEOUT = 500;
+
+async function wait(ms: number) {
+  return new Promise<void>(r => setTimeout(r, ms));
+}
 
 function arrayToList(arr: string[]) {
   return arr.map(item => {
@@ -206,20 +211,20 @@ class CodeFormatManager {
             onType: this.providers.onType.getAllProvidersForEditor(editor)
           };
 
-          let getPackagesForProviders = (providers: unknown[]) => {
-            // @ts-ignore
-            return providers.map(p => atom.packages.packageForService(p));
-          };
+          // let getPackagesForProviders = (providers: unknown[]) => {
+          //   // @ts-ignore
+          //   return providers.map(p => atom.packages.packageForService(p));
+          // };
 
           // @ts-ignore experimental API
-          if (typeof atom.packages?.packageForService === 'function') {
-            let packages = {
-              range: getPackagesForProviders(providers.range),
-              file: getPackagesForProviders(providers.file),
-              onSave: getPackagesForProviders(providers.onSave),
-              onType: getPackagesForProviders(providers.onType)
-            };
-          }
+          // if (typeof atom.packages?.packageForService === 'function') {
+          //   let packages = {
+          //     range: getPackagesForProviders(providers.range),
+          //     file: getPackagesForProviders(providers.file),
+          //     onSave: getPackagesForProviders(providers.onSave),
+          //     onType: getPackagesForProviders(providers.onType)
+          //   };
+          // }
 
           sections.unshift(dedent`
           ### Active providers in this editor
@@ -275,19 +280,24 @@ class CodeFormatManager {
               // Format on save. Formatters are applied before the buffer is
               // saved; because we return a promise here, committing to disk will
               // be deferred until the promise resolves.
-              buffer.onWillSave(async () => {
-                if (!getFormatOnSave(editor)) return;
-                let pipeline = await this.formatCodeOnSaveInTextEditor(editor);
-                try {
-                  await applyCodeFormatPipelineToEditor(pipeline, editor);
-                } catch (err) {
-                  if (isErrorWithDetail(err)) {
-                    atom.notifications.addError(
-                      `Failed to format code: ${err.message}`,
-                      { detail: err.detail }
-                    );
-                  }
-                }
+              buffer.onWillSave(() => {
+                return Promise.race([
+                  wait(SAVE_TIMEOUT),
+                  (async () => {
+                    if (!getFormatOnSave(editor)) return;
+                    let pipeline = await this.formatCodeOnSaveInTextEditor(editor);
+                    try {
+                      await applyCodeFormatPipelineToEditor(pipeline, editor);
+                    } catch (err) {
+                      if (isErrorWithDetail(err)) {
+                        atom.notifications.addError(
+                          `Failed to format code: ${err.message}`,
+                          { detail: err.detail }
+                        );
+                      }
+                    }
+                  })()
+                ]);
               })
             );
           }
@@ -332,11 +342,12 @@ class CodeFormatManager {
 
     // File providers.
     let fileProviders: FileCodeFormatProvider[] = [];
-    if (selectionRange.isEmpty()) {
+    let isEntireFile = selectionRange.isEqual(editor.getBuffer().getRange());
+    if (isEntireFile) {
       fileProviders = [...this.providers.file.getConfiguredProvidersForEditor(editor)];
     }
 
-    if (selectionRange.isEmpty() && fileProviders.length > 0) {
+    if (isEntireFile && fileProviders.length > 0) {
       for (let provider of fileProviders) {
         pipeline.push(
           this.guardVersion(
@@ -363,14 +374,19 @@ class CodeFormatManager {
 
   async formatCodeOnTypeInTextEditor(editor: TextEditor, { changes }: BufferStoppedChangingEvent) {
     // Bail if there's more than one cursor.
-    if (changes.length > 1) return [];
+    if (changes.length > 1) {
+      return [];
+    }
 
     // Bail if we have no providers.
     let providers = [...this.providers.onType.getConfiguredProvidersForEditor(editor)];
-    if (providers.length === 0) return [];
-
+    if (providers.length === 0) {
+      return [];
+    }
     let [change] = changes;
-    if (!shouldFormatOnType(change)) return [];
+    if (!shouldFormatOnType(change)) {
+      return [];
+    }
 
     // In the case of bracket-matching, we use the last character because
     // that's the character that will usually cause a reformat (i.e. `}`

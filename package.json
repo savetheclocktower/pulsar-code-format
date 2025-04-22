@@ -1,6 +1,6 @@
 {
   "name": "pulsar-code-format",
-  "main": "./dist/main",
+  "main": "./dist/lib/main",
   "version": "0.0.1",
   "description": "A pluggable code formatting package",
   "keywords": [],
@@ -9,6 +9,7 @@
   "engines": {
     "atom": ">=1.0.0 <2.0.0"
   },
+  "atomTestRunner": "./dist/spec/runner",
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
@@ -34,6 +35,19 @@
       "type": "boolean",
       "default": false,
       "description": "When checked, each code formatting provider is applied in series in order of priority. When unchecked, only the first provider is applied."
+    },
+    "advanced": {
+      "order": 4,
+      "type": "object",
+      "title": "Advanced",
+      "properties": {
+        "enableDebugLogging": {
+          "title": "Enable Debug Logging",
+          "description": "When checked, will log diagnostic information to the console.",
+          "type": "boolean",
+          "default": false
+        }
+      }
     }
   },
   "consumedServices": {
@@ -64,8 +78,11 @@
   },
   "devDependencies": {
     "@types/atom": "^1.40.18",
+    "@types/temp": "^0.9.4",
     "atom-ide-base": "^3.3.0",
+    "atom-jasmine3-test-runner": "^5.2.13",
     "shx": "^0.3.4",
+    "temp": "^0.9.4",
     "typescript": "^5.4.5"
   },
   "dependencies": {
