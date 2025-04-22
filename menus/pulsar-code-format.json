@@ -2,8 +2,8 @@
   "context-menu": {
     "atom-text-editor": [
       {
-        "label": "Toggle pulsar-code-format",
-        "command": "pulsar-code-format:toggle"
+        "label": "Reformat Code",
+        "command": "pulsar-code-format:format-code"
       }
     ]
   },
@@ -12,11 +12,15 @@
       "label": "Packages",
       "submenu": [
         {
-          "label": "pulsar-code-format",
+          "label": "Pulsar Code Format",
           "submenu": [
             {
-              "label": "Toggle",
-              "command": "pulsar-code-format:toggle"
+              "label": "Format Code",
+              "command": "pulsar-code-format:format-code"
+            },
+            {
+              "label": "List Providers For Current Editor",
+              "command": "pulsar-code-format:list-providers-for-current-editor"
             }
           ]
         }
