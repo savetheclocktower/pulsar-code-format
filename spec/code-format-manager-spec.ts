@@ -9,8 +9,6 @@ describe("CodeFormatManager", () => {
   let subscriptions: CompositeDisposable;
 
   beforeEach(async () => {
-    console.log('setting!');
-    atom.config.set('pulsar-code-format.advanced.enableDebugLogging', true);
     manager = new CodeFormatManager();
     subscriptions = new CompositeDisposable();
     temp.track();
