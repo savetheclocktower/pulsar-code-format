@@ -118,7 +118,7 @@ describe("CodeFormatManager", () => {
       grammarScopes: ["text.plain.null-grammar"],
       priority: 1,
       formatOnSave: async () => {
-        await wait(3000);
+        await wait(SAVE_TIMEOUT * 2);
         return [{
           oldRange: new Range([0, 0], [0, 3]),
           oldText: "why",
