@@ -22,22 +22,24 @@
       "title": "Format On Save",
       "type": "boolean",
       "default": false,
-      "description": "Whether to attempt to format code on save."
+      "description": "Whether to attempt to format code on save.",
+      "order": 1
     },
     "formatOnType": {
       "title": "Format On Type",
       "type": "boolean",
       "default": false,
-      "description": "Whether to attempt to format code as you type."
+      "description": "Whether to attempt to format code as you type.",
+      "order": 2
     },
     "useAllProviders": {
       "title": "Use All Providers",
       "type": "boolean",
       "default": false,
-      "description": "When checked, each code formatting provider is applied in series in order of priority. When unchecked, only the first provider is applied."
+      "description": "When checked, each code formatting provider is applied in series in order of priority. When unchecked, only the first provider is applied.",
+      "order": 3
     },
     "advanced": {
-      "order": 4,
       "type": "object",
       "title": "Advanced",
       "properties": {
@@ -47,7 +49,8 @@
           "type": "boolean",
           "default": false
         }
-      }
+      },
+      "order": 4
     }
   },
   "consumedServices": {

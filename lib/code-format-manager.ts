@@ -278,8 +278,8 @@ class CodeFormatManager {
               }),
 
               // Format on save. Formatters are applied before the buffer is
-              // saved; because we return a promise here, committing to disk will
-              // be deferred until the promise resolves.
+              // saved; because we return a promise here, committing to disk
+              // will be deferred until the promise resolves.
               buffer.onWillSave(() => {
                 return Promise.race([
                   wait(SAVE_TIMEOUT),
